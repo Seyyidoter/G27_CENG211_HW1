@@ -4,7 +4,7 @@ package com.esports;
  * Represents a gamer loaded from gamers.csv.
  *
  * CSV columns: ID, Nickname, Name, Phone, ExperienceYears
- * ExperienceYears is used for skill multiplier in scoring. :contentReference[oaicite:4]{index=4}
+ * ExperienceYears is used for skill multiplier in scoring.
  */
 public class Gamer {
 
@@ -68,7 +68,6 @@ public class Gamer {
     /**
      * Tournament rule: if experienceYears > 10, treat as 10 in multiplier.
      * We'll expose a helper because Match scoring needs this.
-     * :contentReference[oaicite:5]{index=5}
      */
     public int getCappedExperienceForScoring() {
         return Math.min(experienceYears, 10);
