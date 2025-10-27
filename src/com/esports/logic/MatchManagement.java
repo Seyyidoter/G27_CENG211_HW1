@@ -22,12 +22,23 @@ public class MatchManagement {
 
     public MatchManagement(Gamer[] gamers, Game[] games) {
         if (gamers == null || games == null || games.length < 3) {
-            this.allGamerMatches = new Match[0][0];
             this.allGamers = new Gamer[0];
             this.availableGames = new Game[0];
+            this.allGamerMatches = new Match[0][0];
         } else {
-            this.allGamers = gamers;
-            this.availableGames = games;
+            // Defensive copy for gamers
+            this.allGamers = new Gamer[gamers.length];
+            for (int i = 0; i < gamers.length; i++) {
+                this.allGamers[i] = new Gamer(gamers[i]); // Copy constructor
+            }
+
+            // Defensive copy for games
+            this.availableGames = new Game[games.length];
+            for (int i = 0; i < games.length; i++) {
+                this.availableGames[i] = new Game(games[i]); // Copy constructor
+            }
+
+            // Internal match storage (fresh)
             this.allGamerMatches = new Match[gamers.length][MATCHES_PER_GAMER];
         }
     }
@@ -47,14 +58,33 @@ public class MatchManagement {
         }
     }
 
-    /** Generates a random match with 3 random games and random round counts (1–10). */
+    /** Generates a random match with 3 different games and random round counts (1–10). */
     private Match generateRandomMatch(int id) {
         Game[] selectedGames = new Game[3];
         int[] selectedRounds = new int[3];
 
-        for (int i = 0; i < 3; i++) {
-            selectedGames[i] = availableGames[random.nextInt(availableGames.length)];
-            selectedRounds[i] = random.nextInt(10) + 1;
+        int count = 0;
+
+        while (count < 3) {
+            // Pick a random game candidate
+            Game candidate = availableGames[random.nextInt(availableGames.length)];
+
+            // Check if we already picked this game before
+            boolean alreadyChosen = false;
+            for (int j = 0; j < count; j++) {
+                if (selectedGames[j].getId() == candidate.getId()) {
+                    alreadyChosen = true;
+                    break;
+                }
+            }
+
+            // If it's not a duplicate, accept it
+            if (!alreadyChosen) {
+                selectedGames[count] = candidate;
+                selectedRounds[count] = random.nextInt(10) + 1; // 1-10 rounds
+                count++;
+            }
+            // else: duplicate -> loop again and try another random game
         }
 
         return new Match(id, selectedGames, selectedRounds);

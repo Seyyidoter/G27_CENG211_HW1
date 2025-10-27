@@ -18,11 +18,23 @@ public class PointsBoard {
     private static final int MATCHES_PER_GAMER = 15;
 
     public PointsBoard(Gamer[] allGamers) {
-        this.gamers = allGamers != null ? allGamers : new Gamer[0];
-        int size = this.gamers.length;
-        this.totalPoints = new int[size];
-        this.averagePerMatch = new double[size];
-        this.medals = new Medal[size];
+        if (allGamers == null) {
+            this.gamers = new Gamer[0];
+            this.totalPoints = new int[0];
+            this.averagePerMatch = new double[0];
+            this.medals = new Medal[0];
+        } else {
+            // Defensive copy of gamers array
+            this.gamers = new Gamer[allGamers.length];
+            for (int i = 0; i < allGamers.length; i++) {
+                this.gamers[i] = new Gamer(allGamers[i]); // Copy constructor
+            }
+
+            int size = allGamers.length;
+            this.totalPoints = new int[size];
+            this.averagePerMatch = new double[size];
+            this.medals = new Medal[size];
+        }
     }
 
     /** Calculates the season stats using the MatchManagement 2D array */
