@@ -1,4 +1,4 @@
-package com.esports;
+package com.esports.app;
 
 public class EsportsManagementApp {
 }

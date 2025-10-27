@@ -1,4 +1,4 @@
-package com.esports;
+package com.esports.model;
 
 /**
  * Represents a game type (e.g. CS2, Valorant) loaded from games.csv.

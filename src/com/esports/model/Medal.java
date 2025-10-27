@@ -1,4 +1,4 @@
-package com.esports;
+package com.esports.model;
 
 /**
  * Represents a fixed set of medal types for gamers.
