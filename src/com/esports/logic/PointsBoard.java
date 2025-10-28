@@ -5,16 +5,23 @@ import com.esports.model.Match;
 import com.esports.model.Medal;
 
 /**
- * Computes and stores total points, average per match, and medals for each gamer.
- * Uses parallel arrays corresponding to gamer indices.
+ * Aggregates season results per gamer:
+ * - total points
+ * - averagePerMatch: Total Points / 15.0
+ * - medal (derived from total points)
+ * Notes:
+ * Gamer objects are mutable, so we store deep copies of them.
+ * All getters return defensive copies where needed to avoid leaking internal state.
+ * Arrays we expose are cloned so callers cannot modify our internal arrays.
  */
 public class PointsBoard {
 
-    private final Gamer[] gamers;
-    private final int[] totalPoints;
-    private final double[] averagePerMatch;
-    private final Medal[] medals;
+    private final Gamer[] gamers;          // internal deep copies of gamers; never exposed directly
+    private final int[] totalPoints;       // Season totals per gamer
+    private final double[] averagePerMatch;// Season averages per gamer (15)
+    private final Medal[] medals;          // Medal per gamer (derived from total)
 
+    // Each gamer is expected to play exactly 15 matches in the season (PDF requirement).
     private static final int MATCHES_PER_GAMER = 15;
 
     public PointsBoard(Gamer[] allGamers) {
@@ -24,12 +31,10 @@ public class PointsBoard {
             this.averagePerMatch = new double[0];
             this.medals = new Medal[0];
         } else {
-            // Defensive copy of gamers array
             this.gamers = new Gamer[allGamers.length];
             for (int i = 0; i < allGamers.length; i++) {
-                this.gamers[i] = new Gamer(allGamers[i]); // Copy constructor
+                this.gamers[i] = new Gamer(allGamers[i]); // copy ctor
             }
-
             int size = allGamers.length;
             this.totalPoints = new int[size];
             this.averagePerMatch = new double[size];
@@ -37,25 +42,50 @@ public class PointsBoard {
         }
     }
 
-    /** Calculates the season stats using the MatchManagement 2D array */
+    /**
+     * Computes totals, averages, and medals using the 2D match grid.
+     * Rules (from the assignment):
+     * - Total Points = sum of matchPoints over that gamer's 15 matches.
+     * - Average Per Match = Total Points / 15.0 (always divide by 15, not by "played").
+     * - Medal is assigned from Total Points.
+     * Null safety:
+     * - If allGamerMatches or a row is null, we safely assign 0 totals instead of throwing NPE.
+     */
     public void calculateSeasonResults(Match[][] allGamerMatches) {
-        if (gamers.length == 0 || allGamerMatches == null || gamers.length != allGamerMatches.length) return;
+        if (gamers.length == 0 || allGamerMatches == null) return;
 
-        for (int i = 0; i < gamers.length; i++) {
+        // Be robust to length mismatches: compute up to the shortest bound.
+        int bound = Math.min(gamers.length, allGamerMatches.length);
+
+        for (int i = 0; i < bound; i++) {
             Match[] gamerMatches = allGamerMatches[i];
-            int total = 0;
-
-            for (Match match : gamerMatches) {
-                if (match != null) total += match.getMatchPoints();
+            if (gamerMatches == null) {
+                totalPoints[i] = 0;
+                averagePerMatch[i] = 0.0;
+                medals[i] = Medal.NONE;
+                continue;
             }
 
+            int total = 0;
+            for (Match match : gamerMatches) {
+                if (match != null) {
+                    total += match.getMatchPoints();
+                }
+            }
             totalPoints[i] = total;
-            averagePerMatch[i] = (double) total / MATCHES_PER_GAMER;
+            averagePerMatch[i] = total / (double) MATCHES_PER_GAMER;
             medals[i] = Medal.fromTotalPoints(total);
+        }
+
+        // If there are more gamers than rows in allGamerMatches, zero-fill the rest.
+        for (int i = bound; i < gamers.length; i++) {
+            totalPoints[i] = 0;
+            averagePerMatch[i] = 0.0;
+            medals[i] = Medal.NONE;
         }
     }
 
-    /** Returns a defensive copy of the highest-scoring gamer */
+    /** Returns a defensive copy of the highest-scoring gamer. */
     public Gamer getHighestScoringGamer() {
         if (totalPoints.length == 0) return null;
 
@@ -63,14 +93,15 @@ public class PointsBoard {
         for (int i = 1; i < totalPoints.length; i++) {
             if (totalPoints[i] > totalPoints[bestIndex]) bestIndex = i;
         }
-
-        return new Gamer(gamers[bestIndex]);
+        return new Gamer(gamers[bestIndex]); //Defensive
     }
 
-    // --- Getters (safe) ---
+    // --- Safe getters ---
     public Gamer[] getGamers() {
         Gamer[] copy = new Gamer[gamers.length];
-        for (int i = 0; i < gamers.length; i++) copy[i] = new Gamer(gamers[i]);
+        for (int i = 0; i < gamers.length; i++) {
+            copy[i] = new Gamer(gamers[i]);
+        }
         return copy;
     }
 
@@ -87,14 +118,10 @@ public class PointsBoard {
     }
 
     public int[] getAllTotalPoints() {
-        int[] copy = new int[totalPoints.length];
-        System.arraycopy(totalPoints, 0, copy, 0, totalPoints.length);
-        return copy;
+        return totalPoints.clone();
     }
 
     public Medal[] getAllMedals() {
-        Medal[] copy = new Medal[medals.length];
-        System.arraycopy(medals, 0, copy, 0, medals.length);
-        return copy;
+        return medals.clone();
     }
 }

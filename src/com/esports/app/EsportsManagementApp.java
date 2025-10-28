@@ -1,4 +1,4 @@
-package com.esports.app; 
+package com.esports.app;
 
 import com.esports.io.FileIO;
 import com.esports.logic.MatchManagement;
@@ -10,78 +10,73 @@ import com.esports.model.Match;
 
 /**
  * Main application class for the E-Sports Tournament Challenge.
- * This class performs the following steps:
- * 1. Loads data from CSV files.
- * 2. Initializes the MatchManagement and PointsBoard.
- * 3. Runs the tournament simulation.
- * 4. Calculates the final season results.
- * 5. Creates a Query object and prints all results. 
+ * Orchestrates the loading, simulation, and reporting steps.
  */
 public class EsportsManagementApp {
 
-    
-    private static final String GAMES_FILE_PATH = "games.csv";
-    private static final String GAMERS_FILE_PATH = "gamers.csv";
+    private static final String GAMES_FILE_PATH = "src/resources/games.csv";
+    private static final String GAMERS_FILE_PATH = "src/resources/gamers.csv";
 
-    
     public static void main(String[] args) {
-        
-        System.out.println("--- The E-Sports Tournament Challenge Simulation ---");
 
-        // Load Data from CSV files 
-        System.out.println("Loading " + GAMES_FILE_PATH + "...");
+        // 1. Load Data
         Game[] allGames = FileIO.readGames(GAMES_FILE_PATH);
-        
-        System.out.println("Loading " + GAMERS_FILE_PATH + "...");
         Gamer[] allGamers = FileIO.readGamers(GAMERS_FILE_PATH);
 
-        // --- Data Validation Checks ---
-        if (allGamers.length == 0) {
+        // 2. Validate Data (Extracted to a helper method)
+        if (!isDataValid(allGamers, allGames)) {
+            return; // Stop execution if validation fails
+        }
+
+        // 3. Initialize Management Classes
+        MatchManagement matchManagement = new MatchManagement(allGamers, allGames);
+        PointsBoard pointsBoard = new PointsBoard(allGamers);
+
+        // 4. Run Simulation
+        matchManagement.simulateTournament();
+
+        // 5. Calculate Season Results
+        Match[][] simulatedMatches = matchManagement.getAllGamerMatches();
+        pointsBoard.calculateSeasonResults(simulatedMatches);
+
+        // 6. Run Queries and Print Results (Extracted to a helper method)
+        runAndPrintQueries(simulatedMatches, pointsBoard);
+    }
+
+    /**
+     * Checks if the loaded data meets the minimum requirements to run the simulation.
+     * Prints error messages if validation fails.
+     * @param allGamers The loaded array of gamers.
+     * @param allGames The loaded array of games.
+     * @return true if data is valid, false otherwise.
+     */
+    private static boolean isDataValid(Gamer[] allGamers, Game[] allGames) {
+        if (allGamers == null || allGamers.length == 0) {
             System.out.println("Error: Could not load gamers or gamers.csv is empty.");
             System.out.println("Please check the file path: " + GAMERS_FILE_PATH);
-            return; // Stop execution
+            return false;
         }
-        if (allGames.length < 3) {
-            // A match requires 3 different games 
+        if (allGames == null || allGames.length < 3) {
+            // A match requires 3 different games
             System.out.println("Error: At least 3 games are required in games.csv to run a match.");
             System.out.println("Please check the file path: " + GAMES_FILE_PATH);
-            return; // Stop execution
+            return false;
         }
+        return true;
+    }
 
-        System.out.println("Loaded " + allGamers.length + " gamers and " + allGames.length + " games.");
-
-        // Initialize Management Classes
-        MatchManagement matchManagement = new MatchManagement(allGamers, allGames); 
-        PointsBoard pointsBoard = new PointsBoard(allGamers); 
-
-        // Run Simulation
-        int totalMatchCount = allGamers.length * 15; // 15 matches per gamer 
-        System.out.println("Simulating all " + totalMatchCount + " matches...");
-        matchManagement.simulateTournament();
-        System.out.println("Simulation complete.");
-
-        // Calculate Season Results
-        System.out.println("Calculating season results...");
-        
-        // Get the (defensive copy) 2D array of all simulated matches
-        Match[][] simulatedMatches = matchManagement.getAllGamerMatches();
-        
-        // Calculate totals, averages, and medals based on these matches
-        pointsBoard.calculateSeasonResults(simulatedMatches); 
-
-        // Run Queries and Print Results
-        System.out.println("\n--- Tournament Results ---");
-        
-        // Create the Query object, passing it all the data it needs
+    /**
+     * Creates a Query object and prints all tournament results to the console.
+     * @param simulatedMatches The 2D array of all completed matches.
+     * @param pointsBoard The PointsBoard containing calculated season totals.
+     */
+    private static void runAndPrintQueries(Match[][] simulatedMatches, PointsBoard pointsBoard) {
         Query query = new Query(
-            simulatedMatches,
-            pointsBoard.getGamers(), // Get the gamer array copy from the points board
-            pointsBoard              // Pass the board itself for stats
+                simulatedMatches,
+                pointsBoard.getGamers(), // Get the gamer array copy from the points board
+                pointsBoard              // Pass the board itself for stats
         );
 
-        // Print all 6 queries 
         query.printAllQueries();
-        
-        System.out.println("\n--- Simulation Finished ---");
     }
 }
