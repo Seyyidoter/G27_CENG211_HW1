@@ -1,150 +1,200 @@
 package com.esports.model;
-package main.java;
 
 /**
- * Each match has exactly 3 different games.
- * For each game, the number of rounds is randomly chosen between 1 and 10.
- 
- * Match.java calculates:
- *  - rawPoints
- *  - skillPoints (depends on gamer experience)
- *  - bonusPoints (based on rawPoints range)
- *  - matchPoints = skill + bonus
+ * Represents a single match played by a gamer.
+ * Each match consists of exactly 3 different games, each played for 1–10 rounds.
+ * Stores:
+ * - ID
+ * - the games played (3 distinct Game objects)
+ * - the number of rounds for each game
+ * - computed scores: rawPoints, skillPoints, bonusPoints, matchPoints
+ * Satisfies:
+ * - copy constructor
+ * - NPE / illegal state protection
+ * - privacy leak prevention by cloning arrays on get/set
  */
 public class Match {
 
-    // --- FIELDS (DATA) -----------------------------------------------------
-
     private static final int GAME_COUNT = 3;
-    private static final int MIN_ROUND = 1;
-    private static final int MAX_ROUND = 10;
 
-    private final int id;          // match ID
-    private final Game[] games;    // exactly 3 games in each match
-    private final int[] rounds;    // how many rounds played for each game 
+    private int id;
 
-    private int rawPoints;         // total raw points for this match
-    private int skillPoints;       // after experience multiplier
-    private int bonusPoints;       // bonus depending on rawPoints
-    private int matchPoints;       // final score = skill + bonus
+    // Core per-match data
+    private Game[] games;   // Length 3, all distinct IDs
+    private int[] rounds;   // Length 3, each in [1..10]
 
-    // constructor
+    // Calculated
+    private int rawPoints;
+    private int skillPoints;
+    private int bonusPoints;
+    private int matchPoints;
 
+    // Main constructor delegates to validation logic
     public Match(int id, Game[] games, int[] rounds) {
-        if (games == null || rounds == null)
-            throw new IllegalArgumentException("games/rounds cannot be null.");
-        if (games.length != GAME_COUNT || rounds.length != GAME_COUNT)
-            throw new IllegalArgumentException("A match must have exactly 3 games and 3 round values.");
-
-        // distinct control
-        if (games[0] == null || games[1] == null || games[2] == null)
-            throw new IllegalArgumentException("Games cannot be null.");
-        if (games[0] == games[1] || games[0] == games[2] || games[1] == games[2])
-            throw new IllegalArgumentException("Games in a match must be distinct.");
-
-        // round interval control
-        for (int r : rounds) {
-            if (r < MIN_ROUND || r > MAX_ROUND)
-                throw new IllegalArgumentException("Round must be in [1..10].");
-        }
-
-        this.id = id;
-        // defensive copy
-        this.games  = new Game[] { games[0], games[1], games[2] };
-        this.rounds = new int[]  { rounds[0], rounds[1], rounds[2] };
+        setId(id);
+        setGamesAndRounds(games, rounds); // Validates and deep-copies
     }
 
-    // --- CALCULATE POINTS ------------------------------------
+    // Copy constructor (deep defensive copy)
+    public Match(Match other) {
+        if (other == null) {
+            throw new IllegalArgumentException("Match copy constructor: other cannot be null");
+        }
+        this.id = other.id;
+
+        // Deep defensive for games
+        this.games = new Game[GAME_COUNT];
+        for (int i = 0; i < GAME_COUNT; i++) {
+            this.games[i] = new Game(other.games[i]); // Use Game copy constructor
+        }
+
+        // Defensive copy for rounds
+        this.rounds = other.rounds.clone();
+
+        // Copy calculated values
+        this.rawPoints   = other.rawPoints;
+        this.skillPoints = other.skillPoints;
+        this.bonusPoints = other.bonusPoints;
+        this.matchPoints = other.matchPoints;
+    }
 
     /**
-     * Compute all points for this match.
-     * The gamer’s experience effects the skill multiplier.
+     * Computes rawPoints, skillPoints, bonusPoints, matchPoints for a given gamer,
      */
     public void computePointsFor(Gamer gamer) {
         if (gamer == null) {
-            throw new IllegalArgumentException("Gamer cannot be null.");
+            throw new IllegalArgumentException("Gamer cannot be null when computing points.");
         }
 
-        // 1. RAW POINTS = sum(rounds[i] * basePointPerRound[i])
+        // 1) Raw Points = sum(rounds[i] * basePointPerRound[i])
         int raw = 0;
-        for (int i = 0; i < 3; i++) {
-            int base = games[i].getBasePointPerRound();
-            raw += rounds[i] * base;
+        for (int i = 0; i < GAME_COUNT; i++) {
+            raw += rounds[i] * games[i].getBasePointPerRound();
         }
         this.rawPoints = raw;
 
-        // 2. SKILL POINTS = floor(raw * (1 + min(experience,10)*0.02))
-        int exp = gamer.getExperienceYears();
-        if (exp > 10) exp = 10;                 // maximum experience used is 10
-        double multiplier = 1.0 + exp * 0.02;   // each year gives +2%
+        // 2) Skill Points = floor(raw * (1 + min(exp,10) * 0.02))
+        int cappedExp = gamer.getCappedExperienceForScoring(); // 0..10
+        double multiplier = 1.0 + cappedExp * 0.02;
         this.skillPoints = (int) Math.floor(raw * multiplier);
 
-        // 3. BONUS POINTS = depends on rawPoints
+        // 3) Bonus Points by raw score table
         this.bonusPoints = computeBonus(raw);
-        
 
-        // 4. MATCH POINTS = skill + bonus
+        // 4) Match Points = skillPoints + bonusPoints
         this.matchPoints = this.skillPoints + this.bonusPoints;
     }
 
-    // --- BONUS CALCULATION -------------------------------------------------
-    // According to homework table:
-    // 0–199 → +10
-    // 200–399 → +25
-    // 400–599 → +50
-    // ≥600 → +100
     private int computeBonus(int raw) {
         if (raw >= 600) return 100;
         if (raw >= 400) return 50;
         if (raw >= 200) return 25;
-        if (raw >= 0)   return 10;
-        return 0; // (raw cannot be negative, but just in case)
+        return 10;
     }
 
-    // --- GETTERS -----------------------------------------------------------
-    public int getId() { 
-        return id; 
+    // -------- Getters --------
+
+    public int getId() {
+        return id;
     }
 
-    public int getRawPoints() { 
-        return rawPoints; 
+    /**
+     * Returns a defensive deep copy of the games array.
+     * Each Game is copied using its copy constructor.
+     * This prevents callers from modifying internal state (privacy leak prevention).
+     */
+    public Game[] getGames() {
+        Game[] copy = new Game[GAME_COUNT];
+        for (int i = 0; i < GAME_COUNT; i++) {
+            copy[i] = new Game(games[i]);
+        }
+        return copy;
     }
 
-    public int getSkillPoints() { 
-        return skillPoints; 
+    /**
+     * Returns a defensive copy of the rounds array.
+     */
+    public int[] getRounds() {
+        return rounds.clone();
     }
 
-    public int getBonusPoints() { 
-        return bonusPoints; 
+    public int getRawPoints() {
+        return rawPoints;
     }
 
-    public int getMatchPoints() { 
-        return matchPoints; 
+    public int getSkillPoints() {
+        return skillPoints;
     }
 
-    // defensive copies to avoid mutation
-    public Game[] getGames()  { 
-        return new Game[] { games[0], games[1], games[2] }; 
+    public int getBonusPoints() {
+        return bonusPoints;
     }
 
-    public int[]  getRounds() { 
-        return new int[]  { rounds[0], rounds[1], rounds[2] }; 
+    public int getMatchPoints() {
+        return matchPoints;
     }
 
+    // -------- Setters for core identity / configuration --------
 
+    public void setId(int id) {
+        if (id < 0) {
+            throw new IllegalArgumentException("Match id must be >= 0");
+        }
+        this.id = id;
+    }
 
+    /**
+     * Sets both games[] and rounds[] together so we can validate consistency.
+     * This enforces:
+     * - non-null arrays
+     * - length == 3
+     * - each game != null
+     * - each rounds[i] in [1..10]
+     * - all 3 game IDs must be distinct
+     * We deep-copy into internal arrays, so caller's arrays can't mutate us later.
+     */
+    public void setGamesAndRounds(Game[] gamesIn, int[] roundsIn) {
+        if (gamesIn == null || roundsIn == null) {
+            throw new IllegalArgumentException("games/rounds cannot be null");
+        }
+        if (gamesIn.length != GAME_COUNT || roundsIn.length != GAME_COUNT) {
+            throw new IllegalArgumentException("A match must have exactly 3 games and 3 round values.");
+        }
 
-    // --- toString() for printing
+        Game[] tempGames = new Game[GAME_COUNT];
+        int[] tempRounds = new int[GAME_COUNT];
+
+        for (int i = 0; i < GAME_COUNT; i++) {
+            if (gamesIn[i] == null) {
+                throw new IllegalArgumentException("Game at index " + i + " is null.");
+            }
+
+            int r = roundsIn[i];
+            if (r < 1 || r > 10) {
+                throw new IllegalArgumentException("Round count must be in [1..10], got " + r + " at index " + i);
+            }
+
+            // Deep copy of Game so caller can't later mutate original and affect this Match.
+            tempGames[i] = new Game(gamesIn[i]);
+            tempRounds[i] = r;
+        }
+
+        // Distinct game IDs
+        int g0 = tempGames[0].getId();
+        int g1 = tempGames[1].getId();
+        int g2 = tempGames[2].getId();
+        if (g0 == g1 || g0 == g2 || g1 == g2) {
+            throw new IllegalArgumentException("Match must contain three different games.");
+        }
+
+        this.games = tempGames;
+        this.rounds = tempRounds;
+    }
 
     @Override
     public String toString() {
-        // for readable text show names, rounds, and all points
-        String g0 = games[0].getName();
-        String g1 = games[1].getName();
-        String g2 = games[2].getName();
-
         return "Match ID: " + id +
-                "\nGames: [" + g0 + ", " + g1 + ", " + g2 + "]" +
+                "\nGames: [" + games[0].getName() + ", " + games[1].getName() + ", " + games[2].getName() + "]" +
                 "\nRounds: [" + rounds[0] + ", " + rounds[1] + ", " + rounds[2] + "]" +
                 "\nRaw Points: " + rawPoints +
                 "\nSkill Points: " + skillPoints +
@@ -152,4 +202,3 @@ public class Match {
                 "\nMatch Points: " + matchPoints + "\n";
     }
 }
-
