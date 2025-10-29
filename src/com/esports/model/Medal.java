@@ -18,9 +18,9 @@ public enum Medal {
     GOLD, SILVER, BRONZE, NONE;
 
     public static Medal fromTotalPoints(int totalPoints) {
-        if (totalPoints >= 2000) return GOLD;
-        if (totalPoints >= 1200) return SILVER;
-        if (totalPoints >= 700)  return BRONZE;
+        if (totalPoints >= 4400) return GOLD;
+        if (totalPoints >= 3800) return SILVER;
+        if (totalPoints >= 3200)  return BRONZE;
         return NONE;
     }
 
