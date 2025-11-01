@@ -23,7 +23,7 @@ public class EsportsManagementApp {
         Game[] allGames = FileIO.readGames(GAMES_FILE_PATH);
         Gamer[] allGamers = FileIO.readGamers(GAMERS_FILE_PATH);
 
-        // 2. Validate Data (Extracted to a helper method)
+        // 2. Validate data (null/size checks)
         if (!isDataValid(allGamers, allGames)) {
             return; // Stop execution if validation fails
         }
@@ -39,7 +39,7 @@ public class EsportsManagementApp {
         Match[][] simulatedMatches = matchManagement.getAllGamerMatches();
         pointsBoard.calculateSeasonResults(simulatedMatches);
 
-        // 6. Run Queries and Print Results (Extracted to a helper method)
+        // 6. Run queries and print results
         runAndPrintQueries(simulatedMatches, pointsBoard);
     }
 

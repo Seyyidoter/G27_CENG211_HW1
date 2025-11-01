@@ -10,9 +10,9 @@ import java.util.Random;
  * Orchestrates tournament simulation.
  * Holds a 2D grid of matches: [gamerIndex][matchIndex], with 15 matches per gamer.
  * Notes:
- * Gamer and Game are mutable, so we deep-copy them into this class in the constructor.
- * getAllGamerMatches() returns deep copies of Match objects to avoid privacy leaks
- * Optional constructor allows injecting a Random for deterministic tests.
+ * Deep-copies input Gamer/Game arrays in the constructor.
+ * getAllGamerMatches() returns deep copies of Match objects to avoid privacy leaks.
+ * Optional Random can be injected for deterministic tests.
  */
 public class MatchManagement {
 

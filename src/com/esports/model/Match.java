@@ -8,10 +8,10 @@ package com.esports.model;
  * - the games played (3 distinct Game objects)
  * - the number of rounds for each game
  * - computed scores: rawPoints, skillPoints, bonusPoints, matchPoints
- * Satisfies:
- * - copy constructor
- * - NPE / illegal state protection
- * - privacy leak prevention by cloning arrays on get/set
+ * Includes:
+ * - Copy constructor
+ * - NPE/illegal-state checks
+ * - Privacy-leak prevention via defensive copies
  */
 public class Match {
 
@@ -42,7 +42,7 @@ public class Match {
         }
         this.id = other.id;
 
-        // Deep defensive for games
+        // Deep copy for games
         this.games = new Game[GAME_COUNT];
         for (int i = 0; i < GAME_COUNT; i++) {
             this.games[i] = new Game(other.games[i]); // Use Game copy constructor

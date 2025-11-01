@@ -10,9 +10,8 @@ import com.esports.model.Medal;
  * - averagePerMatch: Total Points / 15.0
  * - medal (derived from total points)
  * Notes:
- * Gamer objects are mutable, so we store deep copies of them.
- * All getters return defensive copies where needed to avoid leaking internal state.
- * Arrays we expose are cloned so callers cannot modify our internal arrays.
+ * Stores deep copies of Gamer instances.
+ * Public getters return defensive copies to avoid exposing internal state.
  */
 public class PointsBoard {
 
@@ -21,7 +20,7 @@ public class PointsBoard {
     private final double[] averagePerMatch;// Season averages per gamer (15)
     private final Medal[] medals;          // Medal per gamer (derived from total)
 
-    // Each gamer is expected to play exactly 15 matches in the season (PDF requirement).
+    // Each gamer plays exactly 15 matches in the season (spec requirement).
     private static final int MATCHES_PER_GAMER = 15;
 
     public PointsBoard(Gamer[] allGamers) {

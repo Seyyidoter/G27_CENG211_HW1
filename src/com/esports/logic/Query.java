@@ -89,9 +89,7 @@ public class Query {
 
     /* -------------------------------------------------
        Query 2: Lowest-Scoring Match & Most Contributing Game
-       We must:
-       - print the lowest-scoring match (by Match Points)
-       - then print the most contributing game in that match
+     * Outputs the lowest-scoring match (by Match Points) and the most contributing game within it.
        ------------------------------------------------- */
     public void printLowestScoringMatch() {
         System.out.println("2. Lowest-Scoring Match & Most Contributing Game");
@@ -303,8 +301,8 @@ public class Query {
 
     /**
      * Safely finds the first non-null Match in the allGamerMatches grid.
-     * If no matches exist, returns null instead of throwing. This prevents
-     * null pointer exceptions in edge cases. This matches the "tester-friendly requirement."
+     * If no matches exist, returns null instead of throwing.
+     * Prevents null pointer exceptions in edge cases.
      */
     private Match findFirstNonNullMatch() {
         if (allGamerMatches == null) return null;
