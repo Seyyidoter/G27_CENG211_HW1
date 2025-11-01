@@ -8,10 +8,10 @@ package com.esports.model;
  *  - BRONZE
  *  - NONE
  * Each medal type corresponds to a specific total point range.
- *   GOLD   → 2000 and above
- *   SILVER → 1200–1999
- *   BRONZE → 700–1199
- *   NONE   → below 700
+ *   GOLD   → 4400 and above
+ *   SILVER → 3800–4399
+ *   BRONZE → 3500–3799
+ *   NONE   → below 3500
  */
 
 public enum Medal {
@@ -20,7 +20,7 @@ public enum Medal {
     public static Medal fromTotalPoints(int totalPoints) {
         if (totalPoints >= 4400) return GOLD;
         if (totalPoints >= 3800) return SILVER;
-        if (totalPoints >= 3200)  return BRONZE;
+        if (totalPoints >= 3500)  return BRONZE;
         return NONE;
     }
 

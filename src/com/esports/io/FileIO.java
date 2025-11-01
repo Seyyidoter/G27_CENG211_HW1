@@ -18,7 +18,7 @@ public final class FileIO {
         // 1) Count Pass (UTF-8)
         Path gamesPath = Path.of(path);
         try (BufferedReader br = Files.newBufferedReader(gamesPath, StandardCharsets.UTF_8)) {
-            br.readLine(); // header
+            br.readLine(); // Header
             String line;
             while ((line = br.readLine()) != null) {
                 if (!isBlank(line)) count++;

@@ -95,8 +95,8 @@ public class MatchManagement {
 
     /**
      * Returns a deep defensive copy of the matches grid.
-     * - The outer and inner arrays are cloned.
-     * - Each Match is copied using its copy constructor.
+     * The outer and inner arrays are cloned.
+     * Each Match is copied using its copy constructor.
      */
     public Match[][] getAllGamerMatches() {
         Match[][] copy = new Match[allGamerMatches.length][MATCHES_PER_GAMER];
